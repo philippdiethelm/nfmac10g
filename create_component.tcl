@@ -5,8 +5,6 @@ catch close_project
 cd [file dirname [file normalize [info script]]]
 
 # Create Core
-# ipx::infer_core -verbose -vendor user.org -library user -name nfmac10g -taxonomy /UserIP D:/pcw_hdl/library/nfmac10g/src
-
 create_project nfmac10g_ip . -part xczu4ev-sfvc784-1-i -force
 
 # Set IP repository paths
