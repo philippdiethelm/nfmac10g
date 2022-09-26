@@ -228,7 +228,7 @@ begin
                 when T_LANE3 =>
                     d <= I & I & I & I & T & crc_reg(31 downto 8);
                     c <= x"F8";
-                    if (dic /= 0) then
+                    if (dic = 0) then
                         dic    <= to_unsigned(3, dic'length);
                         tready <= '1';
                         fsm    <= DW_IDLE;
@@ -305,7 +305,7 @@ begin
                     d      <= QW_IDLE_D;
                     c      <= QW_IDLE_C;
                     tready <= '1';
-                    if (dic /= 0) then
+                    if (dic = 0) then
                         dic <= to_unsigned(3, dic'length);
                         fsm <= IDLE_L0;
                     else

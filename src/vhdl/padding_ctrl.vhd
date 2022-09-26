@@ -102,7 +102,7 @@ begin
 
             case fsm is
                 when SRES =>
-                    m_axis_tuser <= "0";
+                    m_axis_tuser <= (others => '0');
                     if m_axis_tready = '1' then
                         s_axis_tready <= '1';
                         fsm           <= IDLE;
@@ -190,7 +190,7 @@ begin
                             fsm <= W2;
                         elsif lane4_start = '0' and dic = 2 and last_tkeep(5 downto 4) = "01" then -- 1f
                             fsm <= W2;
-                        elsif lane4_start = '0' and last_tkeep(4) = '0' then -- 0f, 07, 03, 01
+                        elsif lane4_start = '0' and last_tkeep(4) = '0' and trn(4) = '1' then -- 0f, 07, 03, 01
                             fsm <= W2;
 
                             -- L4

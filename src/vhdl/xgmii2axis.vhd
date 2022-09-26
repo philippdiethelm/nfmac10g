@@ -174,7 +174,7 @@ begin
                 when IDLE =>
                     tvalid_d0     <= '0';
                     tlast_i       <= '0';
-                    tuser_i       <= "0";
+                    tuser_i       <= (others => '0');
                     crc_32        <= CRC802_3_PRESET;
                     inbound_frame <= '0';
                     d_reg         <= d;
@@ -193,7 +193,7 @@ begin
                     tvalid_d0 <= '1';
                     tkeep_i   <= x"FF";
                     tlast_i   <= '0';
-                    tuser_i   <= "0";
+                    tuser_i   <= (others => '0');
                     d_reg     <= d;
                     c_reg     <= c;
                     crc_32    <= crc8B(crc_32, d);
@@ -306,7 +306,7 @@ begin
                     tuser_i <= (others => '0');
                     crc_32  <= crc4B(crc_32, d(63 downto 32));
                     aux_dw  <= d(63 downto 32);
-                    if c /= x"00" then
+                    if c = x"00" then
                         fsm <= D_LANE4;
                     else
                         fsm <= IDLE;
