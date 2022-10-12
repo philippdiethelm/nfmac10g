@@ -120,10 +120,10 @@
     // is_tchar
     ////////////////////////////////////////////////
     function is_tchar (
-        input        [7:0]       byte
+        input        [7:0]       in_byte
         );
     begin
-        if (byte == T)
+        if (in_byte == T)
             is_tchar = 1'b1;
         else
             is_tchar = 1'b0;
