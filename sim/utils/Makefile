@@ -30,24 +30,33 @@
 CC=gcc
 CFLAGS=-Wall -lpcap
 
+ifeq ($(OS),Windows_NT)
+	DEL := del /q /S 
+else
+	DEL := rm -rf 
+endif
+
 clean_list := xsim* xelab* xvlog* webtalk* simlog *.dat
+
+HDL  = $(wildcard $(SIM_HDL)/*.v)
+HDL += $(wildcard $(SRC_HDL)/*.v)
 
 TEST ?= loopback
 top_sim_hdl := nfmac10g_$(TEST)_tb
 
 ifeq ($(TEST),nf2xil)
 	top_sim_hdl := nfmac10g_interoperability_tb
-	xvflags := -d tx=nfmac10g -d rx=xilinx_mac
+	xvflags := -d rx_xilinx_mac
 endif
 
 ifeq ($(TEST),xil2nf)
 	top_sim_hdl := nfmac10g_interoperability_tb
-	xvflags := -d rx=nfmac10g -d tx=xilinx_mac
+	xvflags := -d tx_xilinx_mac
 endif
 
 ifeq ($(TEST),axis_loopback)
+	HDL += $(wildcard $(USRIF_HDL)/*.v)
 	top_sim_hdl := usr_intf_axis_loopback_tb
-	xvflags := -d rx=nfmac10g -d tx=nfmac10g $(USR_INTF_SRCHDL)/*.v
 endif
 
 .PHONY: clean cleansim gen_stim runsim siminst sim_usr_intf
@@ -57,19 +66,15 @@ CORR_LEVLI_VALUES := 0 1 2
 UNDERRUNI_VALUES  := 1 2
 
 siminst:
-	$(foreach ifgi, $(IFGI_VALUES), $(foreach corr_levli, $(CORR_LEVLI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=$(corr_levli) UNDERRUN=0 LOG=$(LOG)))
-	$(foreach ifgi, $(IFGI_VALUES), $(foreach underruni, $(UNDERRUNI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=0) UNDERRUN=$(underruni)0 LOG=$(LOG)))
+	$(foreach ifgi, $(IFGI_VALUES), $(foreach corr_levli, $(CORR_LEVLI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=$(corr_levli) UNDERRUN=0 LOG=$(LOG) && )) true
+	$(foreach ifgi, $(IFGI_VALUES), $(foreach underruni, $(UNDERRUNI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=0 UNDERRUN=$(underruni) LOG=$(LOG) && )) true
 
-vpath %.sdb: xsim.dir/work
+vpath %.sdb xsim.dir/work
 
 %.sdb: %.v
-	xvlog $(xvflags) -sv $<
-
-HDL  = $(wildcard $(SIMHDL)/*.v)
-HDL += $(wildcard $(SRCHDL)/*.v)
+	xvlog -sv $(xvflags) $<
 
 runsim: gen_stim $(HDL:.v=.sdb)
-	@echo $(HDL:.v=.sdb)
 	echo "\n\n////\nSim: IFG=$(IFG) CORR_LEVL=$(CORR_LEVL) UNDERRUN=$(UNDERRUN)\n////" >> $(LOG)
 	xelab work.$(top_sim_hdl) -s sim_snapshot
 	xsim -R sim_snapshot > simlog
@@ -85,8 +90,9 @@ gen_stim: pcap2axis cleansim
 pcap2axis: pcap2axis.c
 	$(CC) -o $@  $< $(CFLAGS)
 
-cleansim:
-	-del $(clean_list)
+cleansim: 
+	-$(foreach entry, $(clean_list), $(shell $(DEL) $(entry)))
 
 clean: cleansim
-	-del pcap2axis
+	-$(DEL) pcap2axis
+	-$(DEL) pcap2axis.exe

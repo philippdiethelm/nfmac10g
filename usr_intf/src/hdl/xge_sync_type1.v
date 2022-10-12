@@ -61,7 +61,7 @@ module xge_sync_type1 # (
     //-------------------------------------------------------
     reg          [7:0]       fsm_a;
     reg                      sync;
-    reg          [W-1:0]     cross;
+    reg          [W-1:0]     cross_reg;
 
     //-------------------------------------------------------
     // Local b
@@ -97,7 +97,7 @@ module xge_sync_type1 # (
                 end
 
                 s1 : begin
-                    cross <= in;
+                    cross_reg <= in;
                     fsm_a <= s2;
                 end
 
@@ -141,7 +141,7 @@ module xge_sync_type1 # (
 
                 s1 : begin
                     if (sync_reg1) begin
-                        async <= cross;
+                        async <= cross_reg;
                     end
                 end
 

@@ -31,9 +31,16 @@ GEN_DIR ?= utils
 clean_vivado := XilMacPrj*
 
 LOG := simulation.log
-SIMHDL := $(realpath ./hdl)
-SRCHDL := $(realpath ../src/hdl)
+SIM_HDL := $(realpath ./hdl)
+SRC_HDL := $(realpath ../src/hdl)
+USRIF_HDL := $(realpath ../usr_intf/src/hdl)
 PCAP := $(realpath all_rem.pcap)
+
+ifeq ($(OS),Windows_NT)
+	DEL := del /q /s 
+else
+	DEL := rm -rf 
+endif
 
 sep := "//////////////////"
 
@@ -43,25 +50,26 @@ sim: loopback interoperability
 
 loopback:
 	echo "$(sep)\nLoopback on XGMII interfaces\n$(sep)" >> $(LOG)
-	$(MAKE) -s -C $(GEN_DIR) siminst SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=loopback LOG=$(LOG)
+	$(MAKE) -C $(GEN_DIR) siminst SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) PCAP=$(PCAP) TEST=loopback LOG=$(LOG)
 
 interoperability:
 	echo "create Xilinx ten_gig_eth_mac core"
-	vivado -nojou -nolog -mode batch -source genip_xilinx_mac.tcl -tclargs $(SIMHDL)
-	$(MAKE) V=1 clean_vivado
+	vivado -nojou -nolog -mode batch -source genip_xilinx_mac.tcl -tclargs $(SIM_HDL)
+	$(MAKE) clean_vivado
 	echo "\n\n$(sep)\nnfmac.Tx -> xilinx_mac.Rx\n$(sep)" >> $(LOG)
-	$(MAKE) V=1 -C $(GEN_DIR) siminst SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=nf2xil LOG=$(LOG)
+	$(MAKE) -C $(GEN_DIR) siminst SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) PCAP=$(PCAP) TEST=nf2xil LOG=$(LOG)
 	echo "xilinx_mac Tx -> nfmac Rx" >> $(LOG)
 	echo "\n\n$(sep)\nxilinx_mac.Tx -> nfmac.Rx\n$(sep)" >> $(LOG)
-	$(MAKE) V=1 -C $(GEN_DIR) siminst SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=xil2nf LOG=$(LOG)
+	$(MAKE) -C $(GEN_DIR) siminst SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) PCAP=$(PCAP) TEST=xil2nf LOG=$(LOG)
 
 sim_usr_intf:
 	echo "$(sep)\nLoopback on AXIS interfaces\n$(sep)" >> $(LOG)
-	$(MAKE) V=1 -C $(GEN_DIR) sim_usr_intf SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) USR_INTF_SRCHDL=$(USR_INTF_SRCHDL) PCAP=$(PCAP) TEST=axis_loopback LOG=$(LOG)
+	$(MAKE) -C $(GEN_DIR) sim_usr_intf SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) USRIF_HDL=$(USRIF_HDL) PCAP=$(PCAP) TEST=axis_loopback LOG=$(LOG)
 
 clean_vivado:
-	rm -rf $(clean_vivado)
+	-$(DEL) $(clean_vivado)
 
 clean: clean_vivado
-	$(MAKE) V=1 -C $(GEN_DIR) clean
-	rm -rf $(SIMHDL)/xilinx* $(SIMHDL)/ten_gig_eth_mac*
+	$(MAKE) -C $(GEN_DIR) clean
+	-$(DEL) "hdl/xilinx*"
+	-$(DEL) "hdl/ten_gig_eth_mac*"

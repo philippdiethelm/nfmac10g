@@ -29,8 +29,18 @@
 //////////////////////////////////////////////////////////////////////////////
 `timescale 1ns / 100ps
 //`default_nettype none
-`define tx nfmac10g
-`define rx xilinx_mac
+
+`ifdef tx_xilinx_mac
+    `define tx xilinx_mac
+`else
+    `define tx nfmac10g
+`endif
+
+`ifdef rx_xilinx_mac
+    `define rx xilinx_mac
+`else
+    `define rx nfmac10g
+`endif
 
 module nfmac10g_interoperability_tb (
 
