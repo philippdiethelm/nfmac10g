@@ -69,13 +69,9 @@ siminst:
 	$(foreach ifgi, $(IFGI_VALUES), $(foreach corr_levli, $(CORR_LEVLI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=$(corr_levli) UNDERRUN=0 LOG=$(LOG) && )) true
 	$(foreach ifgi, $(IFGI_VALUES), $(foreach underruni, $(UNDERRUNI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=0 UNDERRUN=$(underruni) LOG=$(LOG) && )) true
 
-vpath %.sdb xsim.dir/work
-
-%.sdb: %.v
-	xvlog -sv $(xvflags) $<
-
-runsim: gen_stim $(HDL:.v=.sdb)
+runsim: gen_stim $(HDL)
 	echo "\n\n////\nSim: IFG=$(IFG) CORR_LEVL=$(CORR_LEVL) UNDERRUN=$(UNDERRUN)\n////" >> $(LOG)
+	xvlog -sv $(xvflags) $(HDL)
 	xelab work.$(top_sim_hdl) -s sim_snapshot
 	xsim -R sim_snapshot > simlog
 	grep -i "SIM OK" simlog || (echo "Simulation failed, see reports"; false)

@@ -29,7 +29,10 @@
 
 set prj_name XilMacPrj
 
-create_project -part xc7vx690tffg1761-3 $prj_name -force
+#set part xc7vx690tffg1761-3 
+set part xc7k70tfbg484-3 
+
+create_project -part $part $prj_name -force
 create_ip -vlnv xilinx.com:ip:ten_gig_eth_mac:* -module_name xilinx_mac
 set_property CONFIG.Management_Interface false [get_ips xilinx_mac]
 #report_property [get_ips xilinx_mac]
