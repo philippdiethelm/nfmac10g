@@ -32,14 +32,23 @@ CFLAGS=-Wall -lpcap
 
 ifeq ($(OS),Windows_NT)
 	DEL := del /q /S 
+	RD  := rd /q /S 
 else
 	DEL := rm -rf 
+	RD  := rm -rf 
 endif
 
-clean_list := xsim* xelab* xvlog* webtalk* simlog *.dat
+clean_dirs := xsim.dir
+clean_list := xsim* xelab* xvlog* xvhdl* webtalk* simlog *.dat
 
 HDL  = $(wildcard $(SIM_HDL)/*.v)
-HDL += $(wildcard $(SRC_HDL)/*.v)
+VHDL = $(wildcard $(SRC_VHDL)/xgmii_includes.vhd)
+
+ifeq ($(USE_VHDL),src)
+    VHDL += $(wildcard $(SRC_VHDL)/*.vhd)
+else
+    HDL += $(wildcard $(SRC_HDL)/*.v)
+endif
 
 TEST ?= loopback
 top_sim_hdl := nfmac10g_$(TEST)_tb
@@ -66,19 +75,20 @@ CORR_LEVLI_VALUES := 0 1 2
 UNDERRUNI_VALUES  := 1 2
 
 siminst:
-	$(foreach ifgi, $(IFGI_VALUES), $(foreach corr_levli, $(CORR_LEVLI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=$(corr_levli) UNDERRUN=0 LOG=$(LOG) && )) true
-	$(foreach ifgi, $(IFGI_VALUES), $(foreach underruni, $(UNDERRUNI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=0 UNDERRUN=$(underruni) LOG=$(LOG) && )) true
+	$(foreach ifgi, $(IFGI_VALUES), $(foreach corr_levli, $(CORR_LEVLI_VALUES), $(MAKE) runsim USE_VHDL_SRC=$(USE_VHDL_SRC) SIMHDL=$(SIMHDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=$(SRC_VHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=$(corr_levli) UNDERRUN=0 LOG=$(LOG) && )) true
+	$(foreach ifgi, $(IFGI_VALUES), $(foreach underruni, $(UNDERRUNI_VALUES), $(MAKE) runsim USE_VHDL_SRC=$(USE_VHDL_SRC) SIMHDL=$(SIMHDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=$(SRC_VHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=0 UNDERRUN=$(underruni) LOG=$(LOG) && )) true
 
-runsim: gen_stim $(HDL)
+runsim: gen_stim $(HDL) $(VHDL)
 	echo "\n\n////\nSim: IFG=$(IFG) CORR_LEVL=$(CORR_LEVL) UNDERRUN=$(UNDERRUN)\n////" >> $(LOG)
 	xvlog -sv $(xvflags) $(HDL)
+	xvhdl -2008 $(VHDL)
 	xelab work.$(top_sim_hdl) -s sim_snapshot
 	xsim -R sim_snapshot > simlog
 	grep -i "SIM OK" simlog || (echo "Simulation failed, see reports"; false)
 	cat simlog >> $(LOG)
 
 sim_usr_intf:
-	$(foreach ifgi, $(IFGI_VALUES), $(foreach corr_levli, $(CORR_LEVLI_VALUES), $(MAKE) runsim SIMHDL=$(SIMHDL) SRCHDL=$(SRCHDL) USR_INTF_SRCHDL=$(USR_INTF_SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=0 UNDERRUN=0 LOG=$(LOG)))
+	$(foreach ifgi, $(IFGI_VALUES), $(foreach corr_levli, $(CORR_LEVLI_VALUES), $(MAKE) runsim USE_VHDL_SRC=$(USE_VHDL_SRC) SIMHDL=$(SIMHDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=$(SRC_VHDL) USR_INTF_SRCHDL=$(USR_INTF_SRCHDL) PCAP=$(PCAP) TEST=$(TEST) IFG=$(ifgi) CORR_LEVL=0 UNDERRUN=0 LOG=$(LOG)))
 
 gen_stim: pcap2axis cleansim
 	./$< $(PCAP) $(IFG) $(CORR_LEVL) $(UNDERRUN)
@@ -87,6 +97,7 @@ pcap2axis: pcap2axis.c
 	$(CC) -o $@  $< $(CFLAGS)
 
 cleansim: 
+	-$(foreach entry, $(clean_dirs), $(shell $(RD) $(entry)))
 	-$(foreach entry, $(clean_list), $(shell $(DEL) $(entry)))
 
 clean: cleansim
