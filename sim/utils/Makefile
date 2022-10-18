@@ -45,7 +45,13 @@ HDL  = $(wildcard $(SIM_HDL)/*.v)
 VHDL = $(wildcard $(SRC_VHDL)/xgmii_includes.vhd)
 
 ifeq ($(USE_VHDL),src)
-    VHDL += $(wildcard $(SRC_VHDL)/*.vhd)
+    VHDL += $(wildcard $(SRC_VHDL)/axis2xgmii.vhd)
+	VHDL += $(wildcard $(SRC_VHDL)/xgmii2axis.vhd)
+	VHDL += $(wildcard $(SRC_VHDL)/padding_ctrl.vhd)
+	VHDL += $(wildcard $(SRC_VHDL)/rst_mod.vhd)
+	VHDL += $(wildcard $(SRC_VHDL)/rx.vhd)
+	VHDL += $(wildcard $(SRC_VHDL)/tx.vhd)
+	VHDL += $(wildcard $(SRC_VHDL)/nfmac10g.vhd)
 else
     HDL += $(wildcard $(SRC_HDL)/*.v)
 endif

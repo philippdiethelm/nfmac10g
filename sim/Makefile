@@ -28,7 +28,8 @@
 ##############################################################################
 
 GEN_DIR ?= utils
-clean_dirs := $(wildcard XilMacPrj.*)
+clean_dirs := $(wildcard XilMacPrj.*) $(wildcard .Xil)
+clean_list := *.log vivado.jou *.pb
 
 LOG := simulation.log
 SIM_HDL := $(realpath ./hdl)
@@ -53,26 +54,27 @@ sim: loopback interoperability
 
 loopback:
 	echo "$(sep)\nLoopback on XGMII interfaces\n$(sep)" >> $(LOG)
-	$(MAKE) -C $(GEN_DIR) siminst USE_VHDL_SRC=$(USE_VHDL_SRC) SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=${SRC_VHDL} PCAP=$(PCAP) TEST=loopback LOG=$(LOG)
+	$(MAKE) -C $(GEN_DIR) siminst USE_VHDL=$(USE_VHDL) SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=${SRC_VHDL} PCAP=$(PCAP) TEST=loopback LOG=$(LOG)
 
 interoperability:
 	echo "create Xilinx ten_gig_eth_mac core"
 	vivado -nojou -nolog -mode batch -source genip_xilinx_mac.tcl -tclargs $(SIM_HDL)
 	$(MAKE) clean_vivado
 	echo "\n\n$(sep)\nnfmac.Tx -> xilinx_mac.Rx\n$(sep)" >> $(LOG)
-	$(MAKE) -C $(GEN_DIR) siminst USE_VHDL_SRC=$(USE_VHDL_SRC) SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=${SRC_VHDL} PCAP=$(PCAP) TEST=nf2xil LOG=$(LOG)
+	$(MAKE) -C $(GEN_DIR) siminst USE_VHDL=$(USE_VHDL) SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=${SRC_VHDL} PCAP=$(PCAP) TEST=nf2xil LOG=$(LOG)
 	echo "xilinx_mac Tx -> nfmac Rx" >> $(LOG)
 	echo "\n\n$(sep)\nxilinx_mac.Tx -> nfmac.Rx\n$(sep)" >> $(LOG)
-	$(MAKE) -C $(GEN_DIR) siminst USE_VHDL_SRC=$(USE_VHDL_SRC) SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=${SRC_VHDL} PCAP=$(PCAP) TEST=xil2nf LOG=$(LOG)
+	$(MAKE) -C $(GEN_DIR) siminst USE_VHDL=$(USE_VHDL) SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=${SRC_VHDL} PCAP=$(PCAP) TEST=xil2nf LOG=$(LOG)
 
 sim_usr_intf:
 	echo "$(sep)\nLoopback on AXIS interfaces\n$(sep)" >> $(LOG)
-	$(MAKE) -C $(GEN_DIR) sim_usr_intf USE_VHDL_SRC=$(USE_VHDL_SRC) SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=${SRC_VHDL} USRIF_HDL=$(USRIF_HDL) PCAP=$(PCAP) TEST=axis_loopback LOG=$(LOG)
+	$(MAKE) -C $(GEN_DIR) sim_usr_intf USE_VHDL=$(USE_VHDL) SIM_HDL=$(SIM_HDL) SRC_HDL=$(SRC_HDL) SRC_VHDL=${SRC_VHDL} USRIF_HDL=$(USRIF_HDL) PCAP=$(PCAP) TEST=axis_loopback LOG=$(LOG)
 
 clean_vivado:
 	-$(foreach entry, $(clean_dirs), $(shell $(RD) $(entry)))
 
 clean: clean_vivado
 	$(MAKE) -C $(GEN_DIR) clean
-	-$(DEL) "hdl/xilinx*"
-	-$(DEL) "hdl/ten_gig_eth_mac*"
+	-$(DEL) hdl/xilinx*
+	-$(DEL) hdl/ten_gig_eth_mac*
+	-$(foreach entry, $(clean_list), $(shell $(DEL) $(entry)))
